@@ -1,0 +1,70 @@
+# render.yaml
+
+services:
+  - name: chat-web
+    type: web
+    env: ruby
+    plan: standard
+    buildCommand: bundle install && yarn install && bundle exec rake assets:precompile
+    startCommand: bundle exec rails server -b 0.0.0.0 -p 10000
+    envVars:
+      - key: SECRET_TOKEN
+        generateValue: true
+      - key: RACK_ENV
+        value: production
+      - key: RAILS_ENV
+        value: production
+      - key: FRONTEND_URL
+        value: https://chat.blackvpn.io
+      - key: INSTALLATION_ENV
+        value: render
+      - key: REDIS_OPENSSL_VERIFY_MODE
+        value: none
+    envSecrets:
+      - key: DATABASE_URL
+        name: chat-database-url
+      - key: REDIS_URL
+        name: chat-redis-url
+
+  - name: chat-worker
+    type: worker
+    env: ruby
+    plan: standard
+    buildCommand: bundle install && yarn install && bundle exec rake assets:precompile
+    startCommand: bundle exec sidekiq
+    envVars:
+      - key: SECRET_TOKEN
+        generateValue: true
+      - key: RACK_ENV
+        value: production
+      - key: RAILS_ENV
+        value: production
+      - key: FRONTEND_URL
+        value: https://chat.blackvpn.io
+      - key: INSTALLATION_ENV
+        value: render
+      - key: REDIS_OPENSSL_VERIFY_MODE
+        value: none
+    envSecrets:
+      - key: DATABASE_URL
+        name: chat-database-url
+      - key: REDIS_URL
+        name: chat-redis-url
+
+databases:
+  - name: chat-database
+    plan: starter
+
+redis:
+  - name: chat-redis
+    plan: starter
+
+envSecrets:
+  - name: chat-database-url
+    type: database
+    externalDatabase: chat-database
+
+  - name: chat-redis-url
+    type: redis
+    externalRedis: chat-redis
+
